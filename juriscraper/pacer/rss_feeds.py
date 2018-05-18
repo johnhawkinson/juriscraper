@@ -97,6 +97,26 @@ class PacerRssFeed(DocketReport):
         """
         self.feed = feedparser.parse(text)
 
+    def _try_merge(self, data, data_list, previous_item, item):
+        """Returns true if we merged the current item, so therefore
+        it should not be retained."""
+        # If this item and the immediately prior item match
+        # in metadata, then add the current description to
+        # the previous item's and continue the loop.
+        if (
+            data_list and data_list[-1][u'docket_entries']
+            and data[u'docket_entries']
+            and item.title == previous_item.title
+            and item.link == previous_item.link
+            and item.id == previous_item.id
+            and item.published == previous_item.published
+        ):
+            data_list[-1][u'docket_entries'][0][u'short_description'] += (
+                ' AND ' +
+                data[u'docket_entries'][0][u'short_description'])
+            return True
+        return False
+
     @property
     def data(self):
         """Return a list of docket-like objects, rather than a single docket
@@ -129,20 +149,7 @@ class PacerRssFeed(DocketReport):
             # BUT: Guarantee this condition persists into the future:
             assert len(data[u'docket_entries']) <= 1
 
-            # If this item and the immediately prior item match
-            # in metadata, then add the current description to
-            # the previous item's and continue the loop.
-            if (
-                data_list and data_list[-1][u'docket_entries']
-                and data[u'docket_entries']
-                and item.title == previous_item.title
-                and item.link == previous_item.link
-                and item.id == previous_item.id
-                and item.published == previous_item.published
-            ):
-                data_list[-1][u'docket_entries'][0][u'short_description'] += (
-                    ' AND ' +
-                    data[u'docket_entries'][0][u'short_description'])
+            if self._try_merge(data, data_list, previous_item, item):
                 continue
 
             data[u'parties'] = None
