@@ -334,7 +334,7 @@ class AppellateDocketReport(BaseDocketReport, BaseReport):
             #  <B>Terminated: </B>07/31/2017<BR>
             #  Respondent
 
-            name_role = self.redelimit_p(cells[0], r'(?i)<br\s*/?>')
+            name_role = self.redelimit_p(cells[0], self.BR_REGEX)
             count = len(name_role)
             assert count >= 2, \
                 "Expecting 2+ <br>-delimited portions of first cell."
